@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Indicador Buffett — ¿Está el mercado caro?</title>
+    <meta
+      name="description"
+      content="El termómetro del mercado global. Descubre si las bolsas mundiales están caras o baratas con el Indicador Buffett en tiempo real."
+    />
+    <meta
+      property="og:title"
+      content="Indicador Buffett — ¿Está el mercado caro?"
+    />
+    <meta
+      property="og:description"
+      content="El termómetro del mercado global. Datos reales, lenguaje sencillo."
+    />
+    <meta property="og:type" content="website" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg: #0a0a0f;
+        --bg2: #111118;
+        --bg3: #16161f;
+        --border: rgba(255, 255, 255, 0.07);
+        --border2: rgba(255, 255, 255, 0.13);
+        --text: #f0eff8;
+        --muted: #8886a0;
+        --accent: #c8ff00;
+        --accent2: #7c5cff;
+        --danger: #ff4d4d;
+        --warn: #ffaa00;
+        --ok: #00e5a0;
+        --cheap: #4db8ff;
+        --mono: "DM Mono", monospace;
+        --sans: "DM Sans", sans-serif;
+        --display: "Syne", sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* ── NOISE TEXTURE OVERLAY ── */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0.4;
+      }
+
+      /* ── GRID BACKGROUND ── */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(124, 92, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(124, 92, 255, 0.03) 1px, transparent 1px);
+        background-size: 48px 48px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ── NAV ── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 60px;
+        background: rgba(10, 10, 15, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nav-logo {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        text-transform: uppercase;
+      }
+
+      .nav-status {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.8);
+        }
+      }
+
+      /* ── HERO ── */
+      .hero {
+        position: relative;
+        z-index: 1;
+        padding: 140px 2rem 80px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .hero-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        border: 1px solid rgba(200, 255, 0, 0.2);
+        border-radius: 99px;
+        padding: 5px 14px;
+        margin-bottom: 2rem;
+        background: rgba(200, 255, 0, 0.04);
+      }
+
+      h1 {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(38px, 7vw, 80px);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.5rem;
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--accent);
+      }
+
+      .hero-sub {
+        font-size: 18px;
+        color: var(--muted);
+        max-width: 520px;
+        line-height: 1.7;
+        font-weight: 300;
+      }
+
+      /* ── LAST UPDATE ── */
+      .last-update {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2rem;
+      }
+
+      #updateTime {
+        color: var(--text);
+      }
+
+      /* ── SECTION ── */
+      section {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 2rem 6rem;
+      }
+
+      .section-label {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ── MARKETS GRID ── */
+      .markets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .market-card {
+        background: var(--bg2);
+        padding: 2rem;
+        position: relative;
+        transition: background 0.2s;
+        cursor: default;
+      }
+
+      .market-card:hover {
+        background: var(--bg3);
+      }
+
+      .market-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .market-card:hover::before {
+        opacity: 1;
+      }
+      .status-danger::before {
+        background: var(--danger);
+      }
+      .status-warn::before {
+        background: var(--warn);
+      }
+      .status-ok::before {
+        background: var(--ok);
+      }
+      .status-cheap::before {
+        background: var(--cheap);
+      }
+      .status-loading::before {
+        background: var(--muted);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-flag {
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .card-badge {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 500;
+        padding: 3px 10px;
+        border-radius: 99px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .badge-danger {
+        background: rgba(255, 77, 77, 0.12);
+        color: var(--danger);
+        border: 1px solid rgba(255, 77, 77, 0.2);
+      }
+      .badge-warn {
+        background: rgba(255, 170, 0, 0.12);
+        color: var(--warn);
+        border: 1px solid rgba(255, 170, 0, 0.2);
+      }
+      .badge-ok {
+        background: rgba(0, 229, 160, 0.12);
+        color: var(--ok);
+        border: 1px solid rgba(0, 229, 160, 0.2);
+      }
+      .badge-cheap {
+        background: rgba(77, 184, 255, 0.12);
+        color: var(--cheap);
+        border: 1px solid rgba(77, 184, 255, 0.2);
+      }
+      .badge-load {
+        background: rgba(136, 134, 160, 0.12);
+        color: var(--muted);
+        border: 1px solid rgba(136, 134, 160, 0.2);
+      }
+
+      .card-country {
+        font-family: var(--display);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 4px;
+      }
+
+      .card-value {
+        font-family: var(--mono);
+        font-size: 44px;
+        font-weight: 500;
+        line-height: 1;
+        margin-bottom: 6px;
+        transition: color 0.5s;
+      }
+
+      .card-value.status-danger {
+        color: var(--danger);
+      }
+      .card-value.status-warn {
+        color: var(--warn);
+      }
+      .card-value.status-ok {
+        color: var(--ok);
+      }
+      .card-value.status-cheap {
+        color: var(--cheap);
+      }
+      .card-value.status-loading {
+        color: var(--muted);
+      }
+
+      .card-index {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 1.2rem;
+      }
+
+      .card-bar-wrap {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 2px;
+        overflow: visible;
+        position: relative;
+        margin-bottom: 1rem;
+      }
+
+      .card-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 1.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+        position: relative;
+      }
+
+      .card-bar-marker {
+        position: absolute;
+        top: -5px;
+        width: 2px;
+        height: 14px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 1px;
+      }
+
+      .card-desc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+        min-height: 38px;
+      }
+
+      /* ── GAUGE (hero single indicator) ── */
+      .gauge-section {
+        padding: 0 2rem 5rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ── EXPLAINER ── */
+      .explainer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .explainer-item {
+        background: var(--bg2);
+        padding: 1.75rem;
+      }
+
+      .explainer-range {
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 500;
+        margin-bottom: 6px;
+      }
+
+      .explainer-label {
+        font-family: var(--display);
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .explainer-desc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      /* ── FAQ ── */
+      .faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .faq-item {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .faq-question {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        font-weight: 500;
+        padding: 1.25rem 1.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        transition: color 0.2s;
+      }
+
+      .faq-question:hover {
+        color: var(--accent);
+      }
+
+      .faq-icon {
+        font-size: 20px;
+        color: var(--muted);
+        transition:
+          transform 0.3s,
+          color 0.2s;
+        flex-shrink: 0;
+      }
+
+      .faq-item.open .faq-icon {
+        transform: rotate(45deg);
+        color: var(--accent);
+      }
+
+      .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease;
+      }
+
+      .faq-answer-inner {
+        padding: 0 1.5rem 1.25rem;
+        font-size: 14px;
+        color: var(--muted);
+        line-height: 1.7;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+      }
+
+      .faq-item.open .faq-answer {
+        max-height: 300px;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        position: relative;
+        z-index: 1;
+        border-top: 1px solid var(--border);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+      }
+
+      footer p {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      footer strong {
+        color: var(--text);
+      }
+
+      /* ── LOADING SKELETON ── */
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.04) 25%,
+          rgba(255, 255, 255, 0.08) 50%,
+          rgba(255, 255, 255, 0.04) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+
+      /* ── TICKER TAPE ── */
+      .ticker-wrap {
+        width: 100%;
+        overflow: hidden;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        background: var(--bg2);
+        padding: 10px 0;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 4rem;
+      }
+
+      .ticker-track {
+        display: flex;
+        gap: 3rem;
+        animation: ticker 30s linear infinite;
+        width: max-content;
+      }
+
+      .ticker-track:hover {
+        animation-play-state: paused;
+      }
+
+      @keyframes ticker {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      .ticker-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .ticker-item .t-name {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .ticker-item .t-up {
+        color: var(--ok);
+      }
+      .ticker-item .t-down {
+        color: var(--danger);
+      }
+      .ticker-item .t-neu {
+        color: var(--muted);
+      }
+
+      /* ── CTA ── */
+      .cta-bar {
+        background: linear-gradient(
+          135deg,
+          rgba(124, 92, 255, 0.15),
+          rgba(200, 255, 0, 0.05)
+        );
+        border: 1px solid rgba(124, 92, 255, 0.25);
+        border-radius: 16px;
+        padding: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-bottom: 4rem;
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .cta-text h2 {
+        font-family: var(--display);
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .cta-text p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* ── ANIMATIONS ── */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+
+      .fade-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 640px) {
+        nav {
+          padding: 0 1rem;
+        }
+        .hero {
+          padding: 110px 1rem 60px;
+        }
+        section,
+        .gauge-section {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+        h1 {
+          font-size: 36px;
+        }
+        .card-value {
+          font-size: 36px;
+        }
+        .cta-bar {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav>
+      <div class="nav-logo">BuffettMeter</div>
+      <div class="nav-status">
+        <div class="pulse-dot"></div>
+        <span>Datos en tiempo real</span>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-tag">
+        <div class="pulse-dot" style="width: 6px; height: 6px"></div>
+        El termómetro del mercado global
+      </div>
+      <h1>¿Está la bolsa<br /><em>cara o barata?</em></h1>
+      <p class="hero-sub">
+        El Indicador Buffett mide si el mercado vale más de lo que produce la
+        economía real. Sin jerga. Solo la verdad.
+      </p>
+      <p class="last-update">
+        Última actualización: <span id="updateTime">cargando...</span>
+      </p>
+    </div>
+
+    <!-- TICKER TAPE -->
+    <div class="ticker-wrap">
+      <div class="ticker-track" id="tickerTrack">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- MARKETS GRID -->
+    <section>
+      <div class="section-label">Mercados globales</div>
+      <div class="markets-grid" id="marketsGrid">
+        <!-- filled by JS -->
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section>
+      <div class="section-label">Cómo leer el indicador</div>
+      <div class="explainer-grid">
+        <div class="explainer-item">
+          <div class="explainer-range" style="color: var(--cheap)">0–75%</div>
+          <div class="explainer-label" style="color: var(--cheap)">
+            Mercado barato
+          </div>
+          <div class="explainer-desc">
+            Las acciones valen mucho menos que lo que produce la economía.
+            Históricamente, una señal de compra fuerte.
+          </div>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-range" style="color: var(--ok)">75–100%</div>
+          <div class="explainer-label" style="color: var(--ok)">
+            Infravalorado
+          </div>
+          <div class="explainer-desc">
+            Precios razonables. Buena zona para invertir con perspectiva de
+            largo plazo.
+          </div>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-range" style="color: #c8ff00">100–120%</div>
+          <div class="explainer-label" style="color: #c8ff00">Precio justo</div>
+          <div class="explainer-desc">
+            El mercado refleja bien la realidad económica. Zona neutral según
+            Buffett.
+          </div>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-range" style="color: var(--warn)">120–150%</div>
+          <div class="explainer-label" style="color: var(--warn)">
+            Algo caro
+          </div>
+          <div class="explainer-desc">
+            Atención. Los precios empiezan a desconectarse de la economía real.
+            Invertir con precaución.
+          </div>
+        </div>
+        <div class="explainer-item">
+          <div class="explainer-range" style="color: var(--danger)">+150%</div>
+          <div class="explainer-label" style="color: var(--danger)">
+            Muy caro 🔴
+          </div>
+          <div class="explainer-desc">
+            La bolsa vale mucho más de lo que produce la economía. Zona de
+            máximo riesgo histórico.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section>
+      <div class="section-label">Preguntas frecuentes</div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Quién es Warren Buffett y por qué confiar en este indicador?<span
+              class="faq-icon"
+              >+</span
+            >
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Warren Buffett es considerado el mejor inversor de la historia. En
+              2001 dijo en una entrevista con Fortune que este ratio era
+              "probablemente la mejor medida individual de dónde están las
+              valoraciones en un momento dado". Desde entonces se conoce como el
+              Indicador Buffett. No es perfecto, pero ningún indicador lo es.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Si el mercado está caro debo vender todo?<span class="faq-icon"
+              >+</span
+            >
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              No. El indicador mide valoración, no timing. Un mercado caro puede
+              seguir subiendo años antes de corregir. Lo que indica es que el
+              potencial de ganancia futura es más limitado y el riesgo de caída
+              es mayor. Muchos inversores reducen sus aportaciones cuando supera
+              el 150% pero no venden completamente.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Por qué el ratio de EE.UU. es siempre tan alto?<span
+              class="faq-icon"
+              >+</span
+            >
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Buena pregunta. Las grandes empresas americanas (Apple, Google,
+              Microsoft) generan gran parte de sus beneficios fuera de EE.UU.,
+              pero solo se comparan con el PIB americano. Por eso el indicador
+              tiende a ser más alto para EE.UU. que para otros países. Algunos
+              analistas ajustan la comparación usando beneficios globales.
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Qué diferencia hay entre capitalización y PIB?<span
+              class="faq-icon"
+              >+</span
+            >
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              La capitalización bursátil es el precio total de todas las
+              empresas que cotizan en bolsa. El PIB (Producto Interior Bruto) es
+              todo lo que produce y vende una economía en un año: servicios,
+              industria, agricultura, etc. Si la bolsa vale el doble que el PIB,
+              significa que los inversores están pagando mucho más de lo que la
+              economía real "justifica".
+            </div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            ¿Este indicador predijo la crisis de 2008?<span class="faq-icon"
+              >+</span
+            >
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Sí, parcialmente. En 2007, justo antes de la crisis, el indicador
+              superó el 110% en EE.UU. También estuvo elevado antes del crash
+              del dot-com en 2000 (~150%). Sin embargo, no predice cuándo
+              ocurrirá la corrección, solo que el mercado está expuesto a mayor
+              riesgo.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="cta-bar" style="padding: 2.5rem 2rem">
+      <div class="cta-text">
+        <h2>¿Quieres invertir con más criterio?</h2>
+        <p>
+          Este indicador es solo el punto de partida. Comparte esta web con
+          alguien que necesite verlo.
+        </p>
+      </div>
+      <button
+        onclick="shareWeb()"
+        style="
+          background: var(--accent);
+          color: #0a0a0f;
+          border: none;
+          border-radius: 10px;
+          padding: 14px 28px;
+          font-family: var(--display);
+          font-weight: 700;
+          font-size: 14px;
+          cursor: pointer;
+          white-space: nowrap;
+          letter-spacing: 0.04em;
+          transition: opacity 0.2s;
+        "
+        onmouseover="this.style.opacity = '.85'"
+        onmouseout="this.style.opacity = '1'"
+      >
+        Compartir →
+      </button>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <p><strong>BuffettMeter</strong> — Datos para inversores curiosos</p>
+      <p>
+        Fuentes: GuruFocus · World Bank · FRED (Federal Reserve) · stooq.com
+      </p>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--muted)">
+        Hecho con 💛 por <strong style="color: var(--text)">Hector</strong>
+        · porque invertir bien no debería ser solo para expertos
+      </p>
+      <p style="margin-top: 6px; font-size: 11px">
+        Esto no es asesoramiento financiero. Consulta con un profesional antes
+        de invertir.
+      </p>
+    </footer>
+
+    <script>
+      /* ══════════════════════════════════════════════
+   CONFIG — cambia BACKEND_URL cuando despliegues
+   ══════════════════════════════════════════════ */
+      const BACKEND_URL =
+        "https://buffett-backend-production-f377.up.railway.app";
+
+      const MARKETS = [
+        {
+          id: "us",
+          flag: "🇺🇸",
+          country: "Estados Unidos",
+          indexName: "Wilshire 5000 / GNP",
+          fallback: { value: 234.85, mcap: 75050, gdp: 31965 },
+        },
+        {
+          id: "eu",
+          flag: "🇪🇺",
+          country: "Europa (Eurozona)",
+          indexName: "EuroStoxx 50 / PIB Eurozona",
+          fallback: { value: 82.0, mcap: 14200, gdp: 17300 },
+        },
+        {
+          id: "jp",
+          flag: "🇯🇵",
+          country: "Japón",
+          indexName: "Nikkei 225 / PIB Japón",
+          fallback: { value: 145.0, mcap: 6800, gdp: 4700 },
+        },
+        {
+          id: "cn",
+          flag: "🇨🇳",
+          country: "China",
+          indexName: "Shanghai Comp. / PIB China",
+          fallback: { value: 68.0, mcap: 12300, gdp: 18000 },
+        },
+        {
+          id: "uk",
+          flag: "🇬🇧",
+          country: "Reino Unido",
+          indexName: "FTSE 100 / PIB UK",
+          fallback: { value: 98.0, mcap: 2900, gdp: 3140 },
+        },
+        {
+          id: "es",
+          flag: "🇪🇸",
+          country: "España",
+          indexName: "IBEX 35 / PIB España",
+          fallback: { value: 52.0, mcap: 720, gdp: 1582 },
+        },
+      ];
+
+      /* ══════════════════════════════════════════════
+   STATUS HELPERS
+   ══════════════════════════════════════════════ */
+      function getStatus(v) {
+        if (v < 75)
+          return {
+            cls: "status-cheap",
+            badge: "badge-cheap",
+            label: "Barato",
+            color: "#4db8ff",
+          };
+        if (v < 100)
+          return {
+            cls: "status-ok",
+            badge: "badge-ok",
+            label: "Infravalorado",
+            color: "#00e5a0",
+          };
+        if (v < 120)
+          return {
+            cls: "status-ok",
+            badge: "badge-ok",
+            label: "Precio justo",
+            color: "#c8ff00",
+          };
+        if (v < 150)
+          return {
+            cls: "status-warn",
+            badge: "badge-warn",
+            label: "Algo caro",
+            color: "#ffaa00",
+          };
+        return {
+          cls: "status-danger",
+          badge: "badge-danger",
+          label: "Muy caro 🔴",
+          color: "#ff4d4d",
+        };
+      }
+
+      function getDesc(v, country) {
+        if (v < 75)
+          return `El mercado de ${country} cotiza por debajo de su valor económico real. Históricamente, buena zona de entrada.`;
+        if (v < 100)
+          return `Valoraciones razonables en ${country}. El mercado no está ni caro ni barato.`;
+        if (v < 120)
+          return `Mercado de ${country} en zona neutral. Precio acorde a la economía real.`;
+        if (v < 150)
+          return `${country} empieza a mostrar señales de sobrevaloración. Proceder con precaución.`;
+        if (v < 200)
+          return `Mercado de ${country} considerablemente caro respecto a su economía. Zona de riesgo elevado.`;
+        return `${country} en zona de riesgo extremo. El mercado vale ${(v / 100).toFixed(1)}x toda su producción anual.`;
+      }
+
+      /* ══════════════════════════════════════════════
+   FALLBACKS (si el backend no responde)
+   ══════════════════════════════════════════════ */
+      const FALLBACKS = {
+        us: { value: 234.85, mcap: 75050, gdp: 31965 },
+        eu: { value: 82.0, mcap: 14200, gdp: 17300 },
+        jp: { value: 145.0, mcap: 6800, gdp: 4700 },
+        cn: { value: 68.0, mcap: 12300, gdp: 18000 },
+        uk: { value: 98.0, mcap: 2900, gdp: 3140 },
+        es: { value: 52.0, mcap: 720, gdp: 1582 },
+      };
+
+      /* ══════════════════════════════════════════════
+   FETCH DESDE NUESTRO BACKEND (sin CORS)
+   ══════════════════════════════════════════════ */
+      async function fetchAllMarkets() {
+        try {
+          const res = await fetch(`${BACKEND_URL}/api/markets`, {
+            signal: AbortSignal.timeout(10000),
+          });
+          if (!res.ok) throw new Error("Backend error " + res.status);
+          const json = await res.json();
+          return json.data; // { us: {...}, eu: {...}, ... }
+        } catch (e) {
+          console.warn("Backend no disponible, usando fallback:", e.message);
+          return FALLBACKS;
+        }
+      }
+
+      /* ══════════════════════════════════════════════
+   RENDER CARDS
+   ══════════════════════════════════════════════ */
+      function renderSkeleton() {
+        const grid = document.getElementById("marketsGrid");
+        grid.innerHTML = MARKETS.map(
+          (m) => `
+    <div class="market-card status-loading" id="card-${m.id}">
+      <div class="card-header">
+        <div>
+          <div style="font-size:28px;line-height:1;margin-bottom:8px">${m.flag}</div>
+          <div class="card-country">${m.country}</div>
+        </div>
+        <div class="card-badge badge-load">cargando...</div>
+      </div>
+      <div class="card-value status-loading">
+        <span class="skeleton" style="width:100px;height:44px;">&nbsp;</span>
+      </div>
+      <div class="card-index">${m.indexName}</div>
+      <div class="card-bar-wrap">
+        <div class="card-bar-fill skeleton" style="width:60%;background:rgba(255,255,255,0.08);"></div>
+        <div class="card-bar-marker" style="left:40%"></div>
+      </div>
+      <div class="card-desc"><span class="skeleton" style="width:80%;height:14px;">&nbsp;</span></div>
+    </div>
+  `,
+        ).join("");
+      }
+
+      function renderCard(m, data) {
+        const v = data.value;
+        const st = getStatus(v);
+        const barPct = Math.min((v / 300) * 100, 98);
+        const card = document.getElementById("card-" + m.id);
+        if (!card) return;
+
+        card.className = `market-card ${st.cls}`;
+        card.innerHTML = `
+    <div class="card-header">
+      <div>
+        <div style="font-size:28px;line-height:1;margin-bottom:8px">${m.flag}</div>
+        <div class="card-country">${m.country}</div>
+      </div>
+      <div class="card-badge ${st.badge}">${st.label}</div>
+    </div>
+    <div class="card-value ${st.cls}">${v.toFixed(1)}%</div>
+    <div class="card-index">${m.indexName}${data.note ? ' <span style="opacity:.5">·</span> ' + data.note : ""}</div>
+    <div class="card-bar-wrap">
+      <div class="card-bar-fill" style="width:0%;background:${st.color};"></div>
+      <div class="card-bar-marker" style="left:40%;" title="100% = precio justo"></div>
+    </div>
+    <div class="card-desc">${getDesc(v, m.country)}</div>
+  `;
+
+        // Animate bar after a tick
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const bar = card.querySelector(".card-bar-fill");
+            if (bar) bar.style.width = barPct + "%";
+          }, 100);
+        });
+      }
+
+      /* ══════════════════════════════════════════════
+   TICKER TAPE
+   ══════════════════════════════════════════════ */
+      function buildTicker(results) {
+        const items = results.map(({ market, data }) => {
+          const v = data.value;
+          const st = getStatus(v);
+          const cls = st.cls.replace("status-", "t-");
+          return `<div class="ticker-item">
+      <span>${market.flag}</span>
+      <span class="t-name">${market.country}</span>
+      <span class="${v >= 150 ? "t-down" : v < 100 ? "t-up" : "t-neu"}">${v.toFixed(1)}%</span>
+      <span style="opacity:.3">·</span>
+      <span style="opacity:.5;font-size:10px">${getStatus(v).label}</span>
+    </div>`;
+        });
+
+        // Duplicate for seamless loop
+        const html = [...items, ...items].join("");
+        const track = document.getElementById("tickerTrack");
+        if (track) track.innerHTML = html;
+      }
+
+      /* ══════════════════════════════════════════════
+   FADE IN OBSERVER
+   ══════════════════════════════════════════════ */
+      function initFadeObs() {
+        const obs = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e, i) => {
+              if (e.isIntersecting) {
+                setTimeout(() => e.target.classList.add("visible"), i * 80);
+              }
+            });
+          },
+          { threshold: 0.1 },
+        );
+
+        document.querySelectorAll(".fade-up").forEach((el) => obs.observe(el));
+      }
+
+      /* ══════════════════════════════════════════════
+   FAQ ACCORDION
+   ══════════════════════════════════════════════ */
+      function initFaq() {
+        document.querySelectorAll(".faq-question").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const item = btn.closest(".faq-item");
+            const isOpen = item.classList.contains("open");
+            document
+              .querySelectorAll(".faq-item")
+              .forEach((i) => i.classList.remove("open"));
+            if (!isOpen) item.classList.add("open");
+          });
+        });
+      }
+
+      /* ══════════════════════════════════════════════
+   SHARE
+   ══════════════════════════════════════════════ */
+      function shareWeb() {
+        if (navigator.share) {
+          navigator.share({
+            title: "¿Está la bolsa cara? — Indicador Buffett",
+            text: "El termómetro del mercado global. Descubre si es buen momento para invertir.",
+            url: window.location.href,
+          });
+        } else {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            alert("¡Enlace copiado! Compártelo donde quieras.");
+          });
+        }
+      }
+
+      /* ══════════════════════════════════════════════
+   MAIN
+   ══════════════════════════════════════════════ */
+      async function main() {
+        renderSkeleton();
+
+        const now = new Date();
+        document.getElementById("updateTime").textContent =
+          now.toLocaleDateString("es-ES", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }) +
+          " · " +
+          now.toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+        // Fetch todos los mercados desde nuestro backend
+        const marketData = await fetchAllMarkets();
+
+        // Montar resultados en el formato que espera renderCard
+        const results = MARKETS.map((market) => ({
+          market,
+          data: marketData[market.id] || market.fallback,
+        }));
+
+        results.forEach(({ market, data }) => renderCard(market, data));
+        buildTicker(results);
+        initFadeObs();
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initFaq();
+        main();
+        setInterval(main, 5 * 60 * 1000);
+      });
+    </script>
+  </body>
+</html>
